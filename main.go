@@ -27,6 +27,10 @@ func main() {
 		logger.LogError(err.Error())
 		return
 	}
+	if config.ApiBase == "" {
+		logger.LogError(fmt.Sprintf("endpoint is empty"))
+		return
+	}
 	if config.ApiKey == "" {
 		logger.LogError(fmt.Sprintf("apiKey is empty"))
 		return

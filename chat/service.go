@@ -95,10 +95,10 @@ func (api *Api) GetChatMessage(conn *websocket.Conn, cli *openai.Client, mutex *
 			FrequencyPenalty: 0.1,
 			PresencePenalty:  0.1,
 		}
-
+		fmt.Printf("req:", req)
 		stream, err := cli.CreateChatCompletionStream(ctx, req)
 		if err != nil {
-			err = fmt.Errorf("[ERROR] create ChatGPT stream model=%s error: %s", api.Config.Model, err.Error())
+			err = fmt.Errorf("[ERROR] create ChatGPT stream model=%s error: %s", api.Config.AzureModel, err.Error())
 			chatMsg := Message{
 				Kind:       "error",
 				Msg:        err.Error(),
@@ -388,7 +388,8 @@ func (api *Api) WsChat(c *gin.Context) {
 	}()
 
 	api.Logger.LogInfo(fmt.Sprintf("websocket connection open"))
-	cli := openai.NewClient(api.Config.ApiKey)
+	//cli := openai.NewClient(api.Config.ApiKey)
+	cli := openai.NewClientWithConfig(openai.DefaultAzureConfig(api.Config.ApiKey , api.Config.ApiBase , api.Config.AzureModel))
 
 	reqMsgs := make([]openai.ChatCompletionMessage, 0)
 

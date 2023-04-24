@@ -1,6 +1,8 @@
+#azure endpoint
+apiBase: "https://ourpalm-appai-coc.openai.azure.com/"
 # Your openai.com API key
 # openai的API Key
-apiKey: "xxxxxx"
+apiKey: "xxx azure open ai key"
 # Service port
 # 服务端口
 port: 9000
@@ -11,7 +13,9 @@ intervalSeconds: 5
 # Available models include: gpt-4-32k-0314, gpt-4-32k, gpt-4-0314, gpt-4, gpt-3.5-turbo-0301, gpt-3.5-turbo, text-davinci-003, text-davinci-002, text-curie-001, text-babbage-001, text-ada-001, text-davinci-001, davinci-instruct-beta, davinci, curie-instruct-beta, curie, ada, babbage
 # GPT模型，如果使用GPT4模型，请保证对应的openai账号有GPT4模型的使用权限
 # 可用的模型包括: gpt-4-32k-0314, gpt-4-32k, gpt-4-0314, gpt-4, gpt-3.5-turbo-0301, gpt-3.5-turbo, text-davinci-003, text-davinci-002, text-curie-001, text-babbage-001, text-ada-001, text-davinci-001, davinci-instruct-beta, davinci, curie-instruct-beta, curie, ada, babbage
-model: gpt-3.5-turbo-0301
+model: gpt-3.5-turbo
+
+azureModel: ourpalm-appai-coc-gpt35
 # The maximum length of the returned answer
 # 返回答案的最大长度
 maxLength: 2000
