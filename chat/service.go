@@ -84,7 +84,7 @@ func (api *Api) GetChatMessage(conn *websocket.Conn, cli *openai.Client, mutex *
 
 	switch api.Config.Model {
 	case openai.GPT3Dot5Turbo0301, openai.GPT3Dot5Turbo, openai.GPT4, openai.GPT40314, openai.GPT432K0314, openai.GPT432K:
-		prompt := reqMsgs[len(reqMsgs)-1].Content
+		//prompt := reqMsgs[len(reqMsgs)-1].Content
 		req := openai.ChatCompletionRequest{
 			Model:            api.Config.Model,
 			MaxTokens:        api.Config.MaxLength,
@@ -95,7 +95,6 @@ func (api *Api) GetChatMessage(conn *websocket.Conn, cli *openai.Client, mutex *
 			FrequencyPenalty: 0.1,
 			PresencePenalty:  0.1,
 		}
-		fmt.Printf("req:", req)
 		stream, err := cli.CreateChatCompletionStream(ctx, req)
 		if err != nil {
 			err = fmt.Errorf("[ERROR] create ChatGPT stream model=%s error: %s", api.Config.AzureModel, err.Error())
@@ -125,8 +124,8 @@ func (api *Api) GetChatMessage(conn *websocket.Conn, cli *openai.Client, mutex *
 						s = "[ERROR] NO RESPONSE, PLEASE RETRY"
 						kind = "retry"
 					} else {
-						s = "\n\n###### [END] ######"
-						kind = "chat"
+						s = "###[END]###"
+						kind = "chat_end"
 					}
 				} else {
 					s = fmt.Sprintf("[ERROR] %s", err.Error())
@@ -146,22 +145,24 @@ func (api *Api) GetChatMessage(conn *websocket.Conn, cli *openai.Client, mutex *
 
 			if len(response.Choices) > 0 {
 				var s string
-				if i == 0 {
-					s = fmt.Sprintf("%s# %s\n\n", s, prompt)
-				}
+				// if i == 0 {
+				// 	s = fmt.Sprintf("%s# %s\n\n", s, prompt)
+				// }
 				for _, choice := range response.Choices {
 					s = s + choice.Delta.Content
 				}
-				strResp = strResp + s
-				chatMsg := Message{
-					Kind:       "chat",
-					Msg:        s,
-					MsgId:      id,
-					CreateTime: time.Now().Format("2006-01-02 15:04:05"),
+				if len(s) > 0 {
+					strResp = strResp + s
+					chatMsg := Message{
+						Kind:       "chat",
+						Msg:        s,
+						MsgId:      id,
+						CreateTime: time.Now().Format("2006-01-02 15:04:05"),
+					}
+					mutex.Lock()
+					_ = conn.WriteJSON(chatMsg)
+					mutex.Unlock()
 				}
-				mutex.Lock()
-				_ = conn.WriteJSON(chatMsg)
-				mutex.Unlock()
 			}
 			i = i + 1
 		}
@@ -211,8 +212,8 @@ func (api *Api) GetChatMessage(conn *websocket.Conn, cli *openai.Client, mutex *
 						s = "[ERROR] NO RESPONSE, PLEASE RETRY"
 						kind = "retry"
 					} else {
-						s = "\n\n###### [END] ######"
-						kind = "chat"
+						s = "###[END]###"
+						kind = "chat_end"
 					}
 				} else {
 					s = fmt.Sprintf("[ERROR] %s", err.Error())
@@ -232,22 +233,24 @@ func (api *Api) GetChatMessage(conn *websocket.Conn, cli *openai.Client, mutex *
 
 			if len(response.Choices) > 0 {
 				var s string
-				if i == 0 {
-					s = fmt.Sprintf("%s# %s\n\n", s, prompt)
-				}
+				// if i == 0 {
+				// 	s = fmt.Sprintf("%s# %s\n\n", s, prompt)
+				// }
 				for _, choice := range response.Choices {
 					s = s + choice.Text
 				}
-				strResp = strResp + s
-				chatMsg := Message{
-					Kind:       "chat",
-					Msg:        s,
-					MsgId:      id,
-					CreateTime: time.Now().Format("2006-01-02 15:04:05"),
+				if(len(s) > 0){
+					strResp = strResp + s
+					chatMsg := Message{
+						Kind:       "chat",
+						Msg:        s,
+						MsgId:      id,
+						CreateTime: time.Now().Format("2006-01-02 15:04:05"),
+					}
+					mutex.Lock()
+					_ = conn.WriteJSON(chatMsg)
+					mutex.Unlock()
 				}
-				mutex.Lock()
-				_ = conn.WriteJSON(chatMsg)
-				mutex.Unlock()
 			}
 			i = i + 1
 		}
@@ -446,26 +449,26 @@ func (api *Api) WsChat(c *gin.Context) {
 					api.Logger.LogError(err.Error())
 				} else {
 					if strings.HasPrefix(requestMsg, "/image ") {
-						chatMsg := Message{
-							Kind:       "receive",
-							Msg:        requestMsg,
-							MsgId:      uuid.New().String(),
-							CreateTime: time.Now().Format("2006-01-02 15:04:05"),
-						}
-						mutex.Lock()
-						_ = conn.WriteJSON(chatMsg)
-						mutex.Unlock()
+						// chatMsg := Message{
+						// 	Kind:       "receive",
+						// 	Msg:        requestMsg,
+						// 	MsgId:      uuid.New().String(),
+						// 	CreateTime: time.Now().Format("2006-01-02 15:04:05"),
+						// }
+						// mutex.Lock()
+						// _ = conn.WriteJSON(chatMsg)
+						// mutex.Unlock()
 						go api.GetImageMessage(conn, cli, mutex, requestMsg)
 					} else {
-						chatMsg := Message{
-							Kind:       "receive",
-							Msg:        requestMsg,
-							MsgId:      uuid.New().String(),
-							CreateTime: time.Now().Format("2006-01-02 15:04:05"),
-						}
-						mutex.Lock()
-						_ = conn.WriteJSON(chatMsg)
-						mutex.Unlock()
+						// chatMsg := Message{
+						// 	Kind:       "receive",
+						// 	Msg:        requestMsg,
+						// 	MsgId:      uuid.New().String(),
+						// 	CreateTime: time.Now().Format("2006-01-02 15:04:05"),
+						// }
+						// mutex.Lock()
+						// _ = conn.WriteJSON(chatMsg)
+						// mutex.Unlock()
 						reqMsgs = append(reqMsgs, openai.ChatCompletionMessage{
 							Role:    openai.ChatMessageRoleUser,
 							Content: requestMsg,
