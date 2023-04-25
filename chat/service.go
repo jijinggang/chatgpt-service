@@ -16,6 +16,7 @@ import (
 	"github.com/google/uuid"
 	"github.com/gorilla/websocket"
 	openai "github.com/sashabaranov/go-openai"
+	"encoding/json"
 )
 
 type Api struct {
@@ -340,7 +341,12 @@ func (api *Api) GetImageMessage(conn *websocket.Conn, cli *openai.Client, mutex 
 	api.Logger.LogInfo(fmt.Sprintf("[IMAGE] # %s\n%s", requestMsg, msg))
 	return
 }
-
+func parseRequestMessages(requestMsg string) (msgs []openai.ChatCompletionMessage){
+	 if err := json.Unmarshal([]byte(requestMsg), &msgs); err !=nil {
+		 return nil
+	 }
+	 return msgs
+}
 func (api *Api) WsChat(c *gin.Context) {
 	startTime := time.Now()
 	status := StatusFail
@@ -394,7 +400,7 @@ func (api *Api) WsChat(c *gin.Context) {
 	//cli := openai.NewClient(api.Config.ApiKey)
 	cli := openai.NewClientWithConfig(openai.DefaultAzureConfig(api.Config.ApiKey , api.Config.ApiBase , api.Config.AzureModel))
 
-	reqMsgs := make([]openai.ChatCompletionMessage, 0)
+	//reqMsgs := make([]openai.ChatCompletionMessage, 0)
 
 	var latestRequestTime time.Time
 	for {
@@ -469,11 +475,26 @@ func (api *Api) WsChat(c *gin.Context) {
 						// mutex.Lock()
 						// _ = conn.WriteJSON(chatMsg)
 						// mutex.Unlock()
-						reqMsgs = append(reqMsgs, openai.ChatCompletionMessage{
-							Role:    openai.ChatMessageRoleUser,
-							Content: requestMsg,
-						})
-						go api.GetChatMessage(conn, cli, mutex, reqMsgs)
+						
+						// reqMsgs = append(reqMsgs, openai.ChatCompletionMessage{
+						// 	Role:    openai.ChatMessageRoleUser,
+						// 	Content: requestMsg,
+						// })
+						if msgs := parseRequestMessages(requestMsg); msgs == nil {
+							err = fmt.Errorf("[ERROR] reqs parse error")
+							chatMsg := Message{
+								Kind:       "error",
+								Msg:        err.Error(),
+								MsgId:      uuid.New().String(),
+								CreateTime: time.Now().Format("2006-01-02 15:04:05"),
+							}
+							mutex.Lock()
+							_ = conn.WriteJSON(chatMsg)
+							mutex.Unlock()
+							api.Logger.LogError(err.Error())
+						} else {
+							go api.GetChatMessage(conn, cli, mutex, msgs)
+						}
 					}
 				}
 			}
