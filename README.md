@@ -3,6 +3,11 @@
 - [English README](README.md)
 - [中文 README](README_CN.md)
 
+## 修改内容
+
+- 支持azure openai
+- 不在chatgpt-service里管理session，变成完全无状态的，由客户端来管理，增加灵活性
+
 ## About chatgpt-service and chatgpt-stream
 
 - chatgpt-service: [https://github.com/cookeem/chatgpt-service](https://github.com/cookeem/chatgpt-service) 
